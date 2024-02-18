@@ -140,17 +140,17 @@ def main():
     if (switch_id == "0"):
         priority, interface_vlan_map = read_config_file("configs/switch0.cfg")
         opened_ports = {}
-        for port in interface_vlan_map.keys(): # setez toate porturile opened
+        for port in interface_vlan_map.keys(): # set all ports opened
             opened_ports[port] = 1
     elif (switch_id == "1"):
         priority, interface_vlan_map = read_config_file("configs/switch1.cfg")
         opened_ports = {}
-        for port in interface_vlan_map.keys(): # setez toate porturile opened
+        for port in interface_vlan_map.keys(): # set all ports opened
             opened_ports[port] = 1
     elif (switch_id == "2"):
         priority, interface_vlan_map = read_config_file("configs/switch2.cfg")
         opened_ports = {}
-        for port in interface_vlan_map.keys(): # setez toate porturile opened
+        for port in interface_vlan_map.keys(): # set all ports opened
             opened_ports[port] = 1
 
     Table = {}  
@@ -174,7 +174,7 @@ def main():
 
         dest_mac, src_mac, ethertype, vlan_id = parse_ethernet_header(data)
 
-        if (data[0:6] == b'\x01\x80\xC2\x00\x00\x00'): # cadrul primit este BDPU
+        if (data[0:6] == b'\x01\x80\xC2\x00\x00\x00'): # received frame is BPDU
             new_root_bridge_ID, new_root_path_cost = handle_BDPU_received(get_switch_mac(), data[12:24], opened_ports, own_bridge_ID, root_bridge_ID, root_path_cost, interface, interface_vlan_map)
             root_bridge_ID = new_root_bridge_ID
             root_path_cost = new_root_path_cost
@@ -193,14 +193,14 @@ def main():
         # TODO: Implement STP support
         Table[src_mac] = interface
 
-        if (vlan_id == -1):  # am primit fara vlan tag
+        if (vlan_id == -1):  # received without vlan tag
 
             if is_unicast_mac(dest_mac):
                 if dest_mac in Table:
                     if opened_ports[interface] != 0:
                         if interface_vlan_map[Table[dest_mac]] == interface_vlan_map[interface] and interface_vlan_map[Table[dest_mac]] != 99 and opened_ports[Table[dest_mac]] == 1: # trimit fara vlan tag
                             send_to_link(Table[dest_mac], data, length)
-                        elif interface_vlan_map[Table[dest_mac]] == 99 and opened_ports[Table[dest_mac]] == 1:  # trimit cu vlan tag
+                        elif interface_vlan_map[Table[dest_mac]] == 99 and opened_ports[Table[dest_mac]] == 1:  # send further with vlan tag
                             new_data = data[0:12] + create_vlan_tag(interface_vlan_map[interface]) + data[12:]
                             send_to_link(Table[dest_mac], new_data, length + 4)
                     
@@ -211,7 +211,7 @@ def main():
                         if o != interface:
                             if interface_vlan_map[o] == interface_vlan_map[interface] and interface_vlan_map[o] != 99 and opened_ports[o] == 1: # trimit fara vlan tag
                                 send_to_link(o, data, length)
-                            elif interface_vlan_map[o] == 99 and opened_ports[o] == 1:  # trimit cu vlan tag
+                            elif interface_vlan_map[o] == 99 and opened_ports[o] == 1:  # send further with vlan tag
                                 new_data = data[0:12] + create_vlan_tag(interface_vlan_map[interface]) + data[12:]
                                 send_to_link(o, new_data, length + 4)
                          
@@ -222,7 +222,7 @@ def main():
                     if o != interface:
                         if interface_vlan_map[o] == interface_vlan_map[interface] and interface_vlan_map[o] != 99 and opened_ports[o] == 1:  # trimit fara vlan tag
                             send_to_link(o, data, length)
-                        elif interface_vlan_map[o] == 99 and opened_ports[o] == 1:  # trimit cu vlan tag
+                        elif interface_vlan_map[o] == 99 and opened_ports[o] == 1:  # send further with vlan tag
                             new_data = data[0:12] + create_vlan_tag(interface_vlan_map[interface]) + data[12:]
                             send_to_link(o, new_data, length + 4)
                 
@@ -235,7 +235,7 @@ def main():
                         if interface_vlan_map[Table[dest_mac]] == vlan_id and interface_vlan_map[Table[dest_mac]] != 99 and opened_ports[Table[dest_mac]] == 1: # trimit fara vlan tag
                             new_data = data[0:12] + data[16:]
                             send_to_link(Table[dest_mac], new_data, length - 4)
-                        elif interface_vlan_map[Table[dest_mac]] == 99 and opened_ports[Table[dest_mac]] == 1: # trimit cu vlan tag
+                        elif interface_vlan_map[Table[dest_mac]] == 99 and opened_ports[Table[dest_mac]] == 1: # send further with vlan tag
                             send_to_link(Table[dest_mac], data, length)
                 
                 else:
@@ -243,10 +243,10 @@ def main():
                         if o == interface and opened_ports[o] == 0:
                             break
                         if o != interface:
-                            if interface_vlan_map[o] == vlan_id and interface_vlan_map[o] != 99 and opened_ports[o] == 1:  # trimit fara vlan tag
+                            if interface_vlan_map[o] == vlan_id and interface_vlan_map[o] != 99 and opened_ports[o] == 1:  # send further without vlan tag
                                 new_data = data[0:12] + data[16:]
                                 send_to_link(o, new_data, length - 4)
-                            elif interface_vlan_map[o] == 99 and opened_ports[o] == 1:  # trimit cu vlan tag
+                            elif interface_vlan_map[o] == 99 and opened_ports[o] == 1:  # send further with vlan tag
                                 send_to_link(o, data, length)
                    
             else:
@@ -254,10 +254,10 @@ def main():
                     if o == interface and opened_ports[o] == 0:
                         break
                     if o != interface:
-                        if interface_vlan_map[o] == vlan_id and interface_vlan_map[o] != 99 and opened_ports[o] == 1:  # trimit fara vlan tag
+                        if interface_vlan_map[o] == vlan_id and interface_vlan_map[o] != 99 and opened_ports[o] == 1:  # send further without vlan tag
                             new_data = data[0:12] + data[16:]
                             send_to_link(o, new_data, length - 4)
-                        elif interface_vlan_map[o] == 99 and opened_ports[o] == 1:  # trimit cu vlan tag
+                        elif interface_vlan_map[o] == 99 and opened_ports[o] == 1:  # send further with vlan tag
                             send_to_link(o, data, length)
                  
 
